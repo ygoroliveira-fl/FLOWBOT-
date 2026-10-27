@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+src/generated/
+.env
+.env.*
+!.env.example
+*.log
+backups/
+lavalink/plugins/
+lavalink/logs/
+
+# Certificados locais de proxy/sandbox — nunca versionar
+*.crt
+*.pem
+*.key
+dump.rdb
+
+# Monitoramento
+monitoring/metrics_token

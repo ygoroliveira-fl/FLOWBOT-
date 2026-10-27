@@ -1,0 +1,146 @@
+// Modelo de dados do Aurora Music Bot.
+// Documentação: docs/DATABASE.md
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+  // Explícito: no Docker o generate roda antes de existir tsconfig.json e o Prisma inferiria ".ts".
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Quem pode usar os controles privilegiados (pular faixas de outros, parar, volume...).
+enum ControlMode {
+  /// Qualquer membro no canal de voz pode controlar.
+  EVERYONE
+  /// Apenas DJ, gerentes e administradores (padrão).
+  DJ
+}
+
+enum PlaylistVisibility {
+  /// Somente o dono vê e toca.
+  PRIVATE
+  /// Membros do servidor associado podem ver e tocar; só o dono edita.
+  GUILD
+}
+
+/// Configurações por servidor. Snowflakes do Discord são guardados como texto.
+model GuildSettings {
+  guildId              String      @id @db.VarChar(20)
+  djRoleId             String?     @db.VarChar(20)
+  managerRoleId        String?     @db.VarChar(20)
+  controlMode          ControlMode @default(DJ)
+  /// Se o único ouvinte humano no canal recebe direitos de DJ.
+  aloneIsDj            Boolean     @default(true)
+  panelChannelId       String?     @db.VarChar(20)
+  defaultVolume        Int         @default(80)
+  maxVolume            Int         @default(150)
+  inactivityTimeoutSec Int         @default(300)
+  autoplay             Boolean     @default(false)
+  allowDuplicates      Boolean     @default(true)
+  maxQueueSize         Int         @default(500)
+  maxTrackDurationSec  Int?
+  historyEnabled       Boolean     @default(true)
+  /// Streams HTTP genéricos (fora da allowlist) só quando o administrador habilitar.
+  allowHttpStreams     Boolean     @default(false)
+  timezone             String      @default("UTC") @db.VarChar(64)
+  createdAt            DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime    @updatedAt @db.Timestamptz(3)
+
+  panel     PanelState?
+  playlists Playlist[]
+  history   PlayHistory[]
+  auditLogs AuditLog[]
+}
+
+/// Mensagem de painel ativa por servidor, para reaproveitar/limpar após reinício.
+model PanelState {
+  guildId   String        @id @db.VarChar(20)
+  channelId String        @db.VarChar(20)
+  messageId String        @db.VarChar(20)
+  updatedAt DateTime      @updatedAt @db.Timestamptz(3)
+  guild     GuildSettings @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+}
+
+model Playlist {
+  id             String             @id @default(uuid()) @db.Uuid
+  name           String             @db.VarChar(64)
+  /// Nome em minúsculas e sem espaços extras, para unicidade por dono.
+  nameNormalized String             @db.VarChar(64)
+  ownerId        String             @db.VarChar(20)
+  guildId        String?            @db.VarChar(20)
+  visibility     PlaylistVisibility @default(PRIVATE)
+  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @db.Timestamptz(3)
+
+  guild  GuildSettings?  @relation(fields: [guildId], references: [guildId], onDelete: SetNull)
+  tracks PlaylistTrack[]
+
+  @@unique([ownerId, nameNormalized])
+  @@index([guildId, visibility])
+  @@index([ownerId])
+}
+
+model PlaylistTrack {
+  id         String   @id @default(uuid()) @db.Uuid
+  playlistId String   @db.Uuid
+  position   Int
+  encoded    String
+  identifier String   @db.VarChar(512)
+  title      String   @db.VarChar(256)
+  author     String   @db.VarChar(256)
+  uri        String?  @db.VarChar(1024)
+  sourceName String   @db.VarChar(32)
+  durationMs Int
+  isStream   Boolean  @default(false)
+  artworkUrl String?  @db.VarChar(1024)
+  addedAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, position])
+  @@index([playlistId])
+}
+
+model UserPreference {
+  userId        String   @id @db.VarChar(20)
+  /// Fonte padrão de pesquisa (id de provedor, ex.: "youtube", "soundcloud").
+  defaultSource String?  @db.VarChar(32)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model PlayHistory {
+  id         BigInt   @id @default(autoincrement())
+  guildId    String   @db.VarChar(20)
+  userId     String   @db.VarChar(20)
+  title      String   @db.VarChar(256)
+  author     String   @db.VarChar(256)
+  uri        String?  @db.VarChar(1024)
+  sourceName String   @db.VarChar(32)
+  durationMs Int
+  playedAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  guild GuildSettings @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  @@index([guildId, playedAt])
+  @@index([playedAt])
+}
+
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  guildId   String   @db.VarChar(20)
+  actorId   String   @db.VarChar(20)
+  action    String   @db.VarChar(64)
+  details   Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  guild GuildSettings @relation(fields: [guildId], references: [guildId], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@index([createdAt])
+}

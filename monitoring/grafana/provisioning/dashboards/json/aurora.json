@@ -1,0 +1,293 @@
+{
+  "uid": "aurora-overview",
+  "title": "Aurora — visão geral",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "tags": ["aurora"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Sessões ativas",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "id": 1,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "aurora_active_sessions"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Faixas na fila",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "id": 2,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "aurora_queued_tracks"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Servidores",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "id": 3,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "aurora_guilds"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Lavalink conectado",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "id": 4,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min(aurora_lavalink_node_up)"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Ping do gateway",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "id": 5,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "aurora_discord_ws_ping_ms"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Memória (RSS)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "id": 6,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "aurora_process_resident_memory_bytes"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Comandos por minuto",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "id": 7,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (command) (rate(aurora_commands_total[5m])) * 60",
+          "legendFormat": "{{command}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Erros de comando por minuto",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "id": 8,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (command) (rate(aurora_commands_total{outcome=\"error\"}[5m])) * 60",
+          "legendFormat": "{{command}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Eventos de reprodução",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "id": 9,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (event) (rate(aurora_playback_events_total[5m])) * 60",
+          "legendFormat": "{{event}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Pesquisas por provedor e resultado",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "id": 10,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (provider, outcome) (rate(aurora_provider_requests_total[5m])) * 60",
+          "legendFormat": "{{provider}} {{outcome}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência de pesquisa p95",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "id": 11,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, provider) (rate(aurora_provider_request_duration_seconds_bucket[10m])))",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Reconexões",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "id": 12,
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (target) (increase(aurora_reconnects_total[15m]))",
+          "legendFormat": "{{target}}"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  }
+}

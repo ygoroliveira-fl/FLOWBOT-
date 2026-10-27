@@ -1,0 +1,92 @@
+# Configuração do Lavalink v4 usada pelo Aurora.
+# Base: exemplo oficial (https://lavalink.dev/configuration/config/file.html), ajustado.
+# A senha NÃO fica aqui: vem da variável LAVALINK_SERVER_PASSWORD (tem precedência).
+server:
+  port: 2333
+  address: 0.0.0.0
+  http2:
+    enabled: false
+
+plugins:
+  youtube:
+    enabled: true
+    allowSearch: true
+    allowDirectVideoIds: true
+    allowDirectPlaylistIds: true
+    # Ordem dos clientes conforme o README do youtube-source. MUSIC só pesquisa (ytmsearch);
+    # a reprodução usa os demais. Ajuste se o YouTube bloquear algum cliente (ver
+    # docs/TROUBLESHOOTING.md). OAuth/poToken NÃO são configurados (ver docs/MUSIC_PROVIDERS.md).
+    clients:
+      - MUSIC
+      - ANDROID_VR
+      - WEB
+      - WEBEMBEDDED
+
+lavalink:
+  plugins:
+    - dependency: 'dev.lavalink.youtube:youtube-plugin:1.18.2'
+      snapshot: false
+  server:
+    password: 'definido-por-variavel-de-ambiente'
+    sources:
+      # A fonte embutida do YouTube está obsoleta; o plugin acima a substitui.
+      youtube: false
+      bandcamp: true
+      soundcloud: true
+      twitch: true
+      vimeo: true
+      nico: false
+      # Streams HTTP: o bot só envia URLs após checagem de SSRF e liberação do administrador.
+      http: true
+      # Nunca habilitar: permitiria ler arquivos do servidor.
+      local: false
+    filters:
+      volume: true
+      equalizer: true
+      karaoke: true
+      timescale: true
+      tremolo: true
+      vibrato: true
+      distortion: true
+      rotation: true
+      channelMix: true
+      lowPass: true
+    nonAllocatingFrameBuffer: false
+    bufferDurationMs: 400
+    frameBufferDurationMs: 5000
+    opusEncodingQuality: 10
+    resamplingQuality: LOW
+    trackStuckThresholdMs: 10000
+    useSeekGhosting: true
+    youtubePlaylistLoadLimit: 6
+    playerUpdateInterval: 5
+    youtubeSearchEnabled: true
+    soundcloudSearchEnabled: true
+    gc-warnings: true
+    timeouts:
+      connectTimeoutMs: 3000
+      connectionRequestTimeoutMs: 3000
+      socketTimeoutMs: 3000
+
+metrics:
+  prometheus:
+    enabled: false
+    endpoint: /metrics
+
+sentry:
+  dsn: ''
+  environment: ''
+
+logging:
+  file:
+    path: ./logs/
+  level:
+    root: INFO
+    lavalink: INFO
+  request:
+    # Desligado: as URLs de /loadtracks contêm as pesquisas dos usuários.
+    enabled: false
+  logback:
+    rollingpolicy:
+      max-file-size: 50MB
+      max-history: 7

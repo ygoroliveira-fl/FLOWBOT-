@@ -1,0 +1,62 @@
+# Alertas básicos. Para notificar (Discord/e-mail), configure um Alertmanager — ver docs/OPERATIONS.md.
+groups:
+  - name: aurora
+    rules:
+      - alert: BotForaDoAr
+        expr: up{job="aurora-bot"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: 'O bot não responde à coleta de métricas há 2 minutos'
+
+      - alert: DependenciaIndisponivel
+        expr: aurora_dependency_up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: 'Dependência {{ $labels.dependency }} indisponível'
+
+      - alert: LavalinkDesconectado
+        expr: aurora_lavalink_node_up == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: 'Nó Lavalink {{ $labels.node }} desconectado — sem áudio'
+
+      - alert: FalhasDeReproducao
+        expr: |
+          sum(rate(aurora_playback_events_total{event=~"failed|stuck"}[10m]))
+            / clamp_min(sum(rate(aurora_playback_events_total{event="start"}[10m])), 0.001) > 0.3
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Mais de 30% das faixas falhando (provável bloqueio/instabilidade de provedor)'
+
+      - alert: PesquisasComErro
+        expr: |
+          sum by (provider) (rate(aurora_provider_requests_total{outcome=~"error|timeout"}[10m]))
+            / clamp_min(sum by (provider) (rate(aurora_provider_requests_total[10m])), 0.001) > 0.5
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Mais da metade das pesquisas em {{ $labels.provider }} falhando'
+
+      - alert: ErrosInesperados
+        expr: sum(increase(aurora_errors_total[10m])) > 20
+        labels: { severity: warning }
+        annotations:
+          summary: 'Muitos erros inesperados nos últimos 10 minutos'
+
+      - alert: MemoriaAlta
+        expr: aurora_process_resident_memory_bytes > 450 * 1024 * 1024
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Bot usando mais de 450 MB de memória'
+
+      - alert: LatenciaGatewayAlta
+        expr: aurora_discord_ws_ping_ms > 1000
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: 'Latência com o gateway do Discord acima de 1 s'

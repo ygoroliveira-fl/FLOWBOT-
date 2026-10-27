@@ -1,0 +1,42 @@
+# Opcional: Prometheus + Grafana. Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+# Nada é exposto publicamente; acesse o Grafana por túnel SSH (docs/OPERATIONS.md).
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./monitoring/metrics_token:/etc/prometheus/metrics_token:ro
+      - prometheus-data:/prometheus
+    # backend: coletar o bot; monitoring: publicar a porta (redes internal não publicam portas).
+    networks: [backend, monitoring]
+    ports:
+      - '127.0.0.1:9090:9090'
+    security_opt: [no-new-privileges:true]
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?defina GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks: [monitoring]
+    ports:
+      - '127.0.0.1:3000:3000'
+    security_opt: [no-new-privileges:true]
+
+networks:
+  monitoring: {}
+
+volumes:
+  prometheus-data:
+  grafana-data:

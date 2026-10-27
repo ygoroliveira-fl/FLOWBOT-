@@ -1,0 +1,145 @@
+# Implantação em VPS. Segredos vêm do arquivo .env (nunca versionado).
+# Uso: docker compose up -d   |   docs/DEPLOYMENT.md
+name: aurora
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aurora
+      POSTGRES_USER: aurora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U aurora -d aurora']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # Usado só para rate limit e leases: sem persistência em disco (dados efêmeros).
+    command:
+      [
+        'redis-server',
+        '--save',
+        '',
+        '--appendonly',
+        'no',
+        '--requirepass',
+        '${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}',
+        '--maxmemory',
+        '64mb',
+        '--maxmemory-policy',
+        'volatile-lru',
+      ]
+    # Sem root: o entrypoint oficial pula chown/su-exec, compatível com cap_drop ALL.
+    user: redis
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    <<: *hardening
+    logging: *logging
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4.2.2-alpine
+    restart: unless-stopped
+    environment:
+      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD:?defina LAVALINK_PASSWORD no .env}
+      _JAVA_OPTIONS: ${LAVALINK_JAVA_OPTS:--Xmx512m}
+    volumes:
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
+      - lavalink-plugins:/opt/Lavalink/plugins
+    # backend: falar com o bot; egress: buscar áudio e enviar voz ao Discord.
+    networks: [backend, egress]
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O /dev/null --header "Authorization: $$LAVALINK_SERVER_PASSWORD" http://127.0.0.1:2333/version || exit 1',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    <<: *hardening
+    logging: *logging
+
+  migrate:
+    image: ${BOT_IMAGE:-aurora-bot:local}
+    build: .
+    command: ['node_modules/.bin/prisma', 'migrate', 'deploy']
+    environment:
+      DATABASE_URL: postgresql://aurora:${POSTGRES_PASSWORD}@postgres:5432/aurora
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [backend]
+    restart: 'no'
+    <<: *hardening
+    logging: *logging
+
+  bot:
+    image: ${BOT_IMAGE:-aurora-bot:local}
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aurora:${POSTGRES_PASSWORD}@postgres:5432/aurora
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      LAVALINK_NODES: main|lavalink|2333|${LAVALINK_PASSWORD}|false
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: '9464'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      lavalink:
+        condition: service_healthy
+    networks: [backend, egress]
+    # Health/métricas só no loopback do host (Prometheus local ou túnel SSH).
+    ports:
+      - '127.0.0.1:9464:9464'
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    stop_grace_period: 20s
+    <<: *hardening
+    logging: *logging
+
+networks:
+  # Sem rota para a internet: banco e Redis ficam isolados.
+  backend:
+    internal: true
+  egress: {}
+
+volumes:
+  postgres-data:
+  lavalink-plugins:
