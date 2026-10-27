@@ -24,6 +24,8 @@ https://discord.com/oauth2/authorize?client_id=SEU_CLIENT_ID&scope=bot+applicati
 
 ## 3. Requisitos da VPS
 
+Sem orçamento? Veja [DEPLOY_ORACLE_FREE.md](DEPLOY_ORACLE_FREE.md) (VM ARM gratuita da Oracle Cloud).
+
 | Item  | Mínimo                                     | Recomendado                                        |
 | ----- | ------------------------------------------ | -------------------------------------------------- |
 | CPU   | 1 vCPU                                     | 2 vCPU                                             |
