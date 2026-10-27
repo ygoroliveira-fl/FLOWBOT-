@@ -44,6 +44,13 @@ playlists persistentes, sistema de DJ e implantação em VPS com Docker Compose.
 Justificativas em [docs/TECHNICAL_RESEARCH.md](docs/TECHNICAL_RESEARCH.md) e
 [docs/DECISIONS.md](docs/DECISIONS.md).
 
+## Jeito mais fácil: no seu PC
+
+Instale o [Docker Desktop](https://www.docker.com/products/docker-desktop/), baixe este projeto
+(Code → Download ZIP) e dê dois cliques em `INICIAR-WINDOWS.bat` (ou `INICIAR-MAC-LINUX.command`).
+Grátis; o bot fica online enquanto o PC estiver ligado. Passo a passo em
+[docs/RODAR_NO_PC.md](docs/RODAR_NO_PC.md).
+
 ## Início rápido (desenvolvimento)
 
 Pré-requisitos: Node 22.12+, pnpm 10 (`corepack enable`), Docker (para Postgres e Lavalink).
@@ -96,6 +103,7 @@ em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 | [DATABASE](docs/DATABASE.md)                                | Modelo de dados e migrações                      |
 | [SECURITY](docs/SECURITY.md)                                | Ameaças e controles                              |
 | [DEPLOYMENT](docs/DEPLOYMENT.md)                            | Aplicação no Discord, VPS, variáveis de ambiente |
+| [RODAR_NO_PC](docs/RODAR_NO_PC.md)                          | Rodar no próprio computador com dois cliques     |
 | [DEPLOY_ORACLE_FREE](docs/DEPLOY_ORACLE_FREE.md)            | Hospedagem gratuita (Oracle Cloud Always Free)   |
 | [OPERATIONS](docs/OPERATIONS.md)                            | Rotina, monitoramento, atualização, custos       |
 | [BACKUP_RESTORE](docs/BACKUP_RESTORE.md)                    | Backup e restauração                             |
