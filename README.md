@@ -96,6 +96,7 @@ em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 | [DATABASE](docs/DATABASE.md)                                | Modelo de dados e migrações                      |
 | [SECURITY](docs/SECURITY.md)                                | Ameaças e controles                              |
 | [DEPLOYMENT](docs/DEPLOYMENT.md)                            | Aplicação no Discord, VPS, variáveis de ambiente |
+| [DEPLOY_ORACLE_FREE](docs/DEPLOY_ORACLE_FREE.md)            | Hospedagem gratuita (Oracle Cloud Always Free)   |
 | [OPERATIONS](docs/OPERATIONS.md)                            | Rotina, monitoramento, atualização, custos       |
 | [BACKUP_RESTORE](docs/BACKUP_RESTORE.md)                    | Backup e restauração                             |
 | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md)                  | Problemas comuns                                 |
